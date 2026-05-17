@@ -7,6 +7,12 @@ import SignIn from './pages/SignIn';
 import AdminDashboard from './pages/AdminDashboard';
 import PharmacistDashboard from './pages/PharmacistDashboard';
 import UserDashboard from './pages/UserDashboard';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderHistoryPage from './pages/OrderHistoryPage';
+import TrackOrderPage from './pages/TrackOrderPage';
+import DeliveryDashboardPage from './pages/DeliveryDashboardPage';
+import DeliveryAgentLoginPage from './pages/DeliveryAgentLoginPage';
+import QRVerificationPage from './pages/QRVerificationPage';
 import { getMe, logout as apiLogout, getToken } from './services/api';
 import { Toaster } from 'react-hot-toast';
 import './styles/index.css';
@@ -93,6 +99,8 @@ export default function App() {
         <Route path="/signup" element={<SignUp onAuth={handleAuth} />} />
         <Route path="/signin" element={<SignIn onAuth={handleAuth} />} />
 
+        <Route path="/agent-login" element={<DeliveryAgentLoginPage onAuth={handleAuth} />} />
+
         {/* Protected */}
         <Route
           path="/admin"
@@ -116,6 +124,46 @@ export default function App() {
             user?.role === 'user'
               ? <UserDashboard />
               : <Navigate to="/signin" replace />
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            user?.role === 'user'
+              ? <CheckoutPage />
+              : <Navigate to="/signin" replace />
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            user?.role === 'user'
+              ? <OrderHistoryPage />
+              : <Navigate to="/signin" replace />
+          }
+        />
+        <Route
+          path="/track/:id"
+          element={
+            user?.role === 'user'
+              ? <TrackOrderPage />
+              : <Navigate to="/signin" replace />
+          }
+        />
+        <Route
+          path="/delivery-dashboard"
+          element={
+            user?.role === 'delivery_agent'
+              ? <DeliveryDashboardPage />
+              : <Navigate to="/agent-login" replace />
+          }
+        />
+        <Route
+          path="/qr-scan"
+          element={
+            (user?.role === 'delivery_agent' || user?.role === 'pharmacist')
+              ? <QRVerificationPage />
+              : <Navigate to="/" replace />
           }
         />
 

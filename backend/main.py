@@ -12,6 +12,10 @@ from routes.admin_routes import router as admin_router
 from routes.inventory_routes import router as inventory_router
 from routes.search_routes import router as search_router
 from routes.booking_routes import router as booking_router
+from routes.address_routes import router as address_router
+from routes.order_routes import router as order_router
+from routes.delivery_routes import router as delivery_router
+from routes.qr_routes import router as qr_router
 from datetime import datetime, timezone
 
 
@@ -74,6 +78,10 @@ app.include_router(admin_router)
 app.include_router(inventory_router)
 app.include_router(search_router)
 app.include_router(booking_router)
+app.include_router(address_router)
+app.include_router(order_router)
+app.include_router(delivery_router)
+app.include_router(qr_router)
 
 
 @app.get("/api/health")

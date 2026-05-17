@@ -18,3 +18,7 @@ users_collection = db["users"]
 pharmacies_collection = db["pharmacies"]
 medicines_collection = db["medicines"]
 inventory_collection = db["inventory"]
+addresses_collection = db["addresses"]
+delivery_agents_collection = db["delivery_agents"]
+orders_collection = db["orders"]
+

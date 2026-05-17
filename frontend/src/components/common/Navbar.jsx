@@ -54,7 +54,12 @@ export default function Navbar({ user, onLogout }) {
           <>
             {user.role === 'admin' && <li><Link to="/admin" className="nav-active">Admin Panel</Link></li>}
             {user.role === 'pharmacist' && <li><Link to="/pharmacist" className="nav-active">Inventory</Link></li>}
-            {user.role === 'user' && <li><Link to="/dashboard" className="nav-active">Dashboard</Link></li>}
+            {user.role === 'user' && (
+              <>
+                <li><Link to="/dashboard" className="nav-active">Dashboard</Link></li>
+                <li><Link to="/orders" className="nav-active">My Orders</Link></li>
+              </>
+            )}
             <li>
               <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-light)' }}>
                 {user.email}
