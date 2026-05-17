@@ -436,6 +436,17 @@ export default function UserDashboard() {
     });
   };
 
+  const openBookingSetup = (pin) => {
+    setBookingPharmacy(pin);
+    const initialQtys = {};
+    pin.allMedicines.forEach(m => {
+      initialQtys[m.medicine.id] = 0;
+    });
+    setBookingQuantities(initialQtys);
+    setQrToken(null);
+    setShowBookModal(true);
+  };
+
   const submitBooking = async () => {
     const items = [];
     bookingPharmacy.allMedicines.forEach(m => {
@@ -472,7 +483,9 @@ export default function UserDashboard() {
 
   return (
     <div style={{ padding: 'var(--sp-xl)', width: '98%', maxWidth: '1800px', margin: '0 auto', height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column' }}>
-      <div className="animate-in" style={{ flexShrink: 0 }}>
+      {activeTab === 'search' ? (
+        <>
+          <div className="animate-in" style={{ flexShrink: 0 }}>
         <h2 style={{ fontSize: 'var(--fs-2xl)', fontWeight: 'var(--fw-bold)', marginBottom: 'var(--sp-sm)' }}>
           Find Medicines Near You
         </h2>

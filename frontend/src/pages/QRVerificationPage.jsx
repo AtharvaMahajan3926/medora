@@ -1,70 +1,220 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Keyboard, Camera } from 'lucide-react';
 import QRScanner from '../components/common/QRScanner';
 
 const QRVerificationPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const hasScannedRef = useRef(false);
 
   const handleScanSuccess = async (decodedText) => {
+    if (!decodedText || !decodedText.trim()) {
+      toast.error('Please enter a valid code');
+      return;
+    }
+    if (hasScannedRef.current) {
+      return; // Ignore duplicate concurrent scans
+    }
+    hasScannedRef.current = true;
     setLoading(true);
     try {
-      const { data } = await api.post('/qr/verify', { qr_code: decodedText });
+      const data = await api.post('/qr/verify', { qr_code: decodedText.trim() });
       setResult(data);
       toast.success('QR Code verified successfully!');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Invalid QR Code or unauthorized');
+      // Reset gatekeeper ref on error so they can retry scanning
+      hasScannedRef.current = false;
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="bg-white border-b sticky top-0 z-10 px-4 py-3 flex items-center gap-3 shadow-sm">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+    <div style={{ minHeight: '100vh', background: 'var(--clr-bg)', color: 'var(--clr-text)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ 
+        background: 'var(--clr-surface)', 
+        borderBottom: '1px solid var(--clr-border)', 
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 10, 
+        padding: '0.75rem 1.5rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '1rem',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)'
+      }}>
+        <button 
+          onClick={() => navigate(-1)} 
+          style={{ 
+            background: 'transparent', 
+            border: 'none', 
+            cursor: 'pointer', 
+            padding: '0.5rem', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            color: 'var(--clr-text-muted)',
+            transition: 'background 0.2s'
+          }}
+          onMouseOver={e => e.currentTarget.style.background = 'var(--clr-surface-alt)'}
+          onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+        >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="text-xl font-bold">Verify Customer QR</h1>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Verify Customer QR</h1>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-        <div className="max-w-md w-full">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+        <div style={{ maxWidth: '450px', width: '100%' }}>
           
           {!result ? (
-            <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 text-center">
-              <h2 className="text-lg font-bold text-gray-800 mb-2">Scan QR Code</h2>
-              <p className="text-sm text-gray-500 mb-6">Ask the customer to show their order QR code and scan it here to complete the transaction.</p>
+            <div style={{ 
+              background: 'var(--clr-surface)', 
+              borderRadius: 'var(--radius-lg)', 
+              boxShadow: 'var(--shadow-md)', 
+              padding: '2rem', 
+              border: '1px solid var(--clr-border)', 
+              textAlign: 'center' 
+            }}>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Scan QR Code</h2>
+              <p style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)', marginBottom: '2rem' }}>
+                Ask the customer to show their order QR code and scan it here to complete the transaction.
+              </p>
               
               {loading ? (
-                <div className="h-64 flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                <div style={{ height: '250px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="spin" style={{ display: 'inline-block', fontSize: '2rem' }}>⏳</span>
+                </div>
+              ) : showManualInput ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter QR Code / Token..." 
+                    value={manualCode}
+                    onChange={e => setManualCode(e.target.value)}
+                    style={{ 
+                      padding: '0.75rem 1rem', 
+                      borderRadius: 'var(--radius-md)', 
+                      border: '1px solid var(--clr-border)',
+                      background: 'var(--clr-bg)',
+                      color: 'var(--clr-text)',
+                      width: '100%',
+                      fontSize: '1rem',
+                      outline: 'none'
+                    }}
+                  />
+                  <button 
+                    onClick={() => handleScanSuccess(manualCode)}
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '0.75rem' }}
+                  >
+                    Verify Code
+                  </button>
+                  <button 
+                    onClick={() => setShowManualInput(false)}
+                    style={{ 
+                      background: 'transparent', 
+                      border: 'none', 
+                      color: 'var(--clr-primary)', 
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      marginTop: '0.5rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    <Camera size={16} /> Switch to Camera Scanner
+                  </button>
                 </div>
               ) : (
-                <QRScanner onScanSuccess={handleScanSuccess} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <QRScanner onScanSuccess={handleScanSuccess} />
+                  <button 
+                    onClick={() => setShowManualInput(true)}
+                    style={{ 
+                      background: 'transparent', 
+                      border: 'none', 
+                      color: 'var(--clr-primary)', 
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      marginTop: '0.5rem'
+                    }}
+                  >
+                    <Keyboard size={16} /> Can't scan? Enter code manually
+                  </button>
+                </div>
               )}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl shadow-md p-8 border border-green-200 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
-              <div className="mx-auto w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+            <div style={{ 
+              background: 'var(--clr-surface)', 
+              borderRadius: 'var(--radius-lg)', 
+              boxShadow: 'var(--shadow-md)', 
+              padding: '2.5rem', 
+              border: '1px solid var(--clr-success-border)', 
+              textAlign: 'center', 
+              position: 'relative', 
+              overflow: 'hidden' 
+            }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--clr-success)' }}></div>
+              <div style={{ 
+                margin: '0 auto 1.5rem auto', 
+                width: '5rem', 
+                height: '5rem', 
+                background: 'var(--clr-success-bg)', 
+                color: 'var(--clr-success)', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+              }}>
                 <CheckCircle size={40} />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Success!</h2>
-              <p className="text-gray-600 mb-6">{result.detail}</p>
+              <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'var(--clr-success)', marginBottom: '0.5rem' }}>Success!</h2>
+              <p style={{ color: 'var(--clr-text-muted)', marginBottom: '1.5rem' }}>{result.detail}</p>
               
-              <div className="bg-gray-50 p-4 rounded-xl text-left space-y-2 border border-gray-100 mb-8">
-                <p className="text-sm"><span className="text-gray-500">Customer:</span> <span className="font-semibold float-right">{result.customer_name}</span></p>
-                <p className="text-sm"><span className="text-gray-500">Amount Collected:</span> <span className="font-semibold float-right text-green-700">${result.total_amount?.toFixed(2)}</span></p>
+              <div style={{ 
+                background: 'var(--clr-surface-alt)', 
+                padding: '1rem', 
+                borderRadius: 'var(--radius-md)', 
+                textAlign: 'left', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '0.5rem', 
+                border: '1px solid var(--clr-border)', 
+                marginBottom: '2rem' 
+              }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--clr-text-muted)' }}>Customer:</span> 
+                  <span style={{ fontWeight: '600' }}>{result.customer_name}</span>
+                </p>
+                <p style={{ margin: 0, fontSize: '0.9rem', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--clr-text-muted)' }}>Amount Collected:</span> 
+                  <span style={{ fontWeight: 'bold', color: 'var(--clr-success)' }}>₹{result.total_amount?.toFixed(2)}</span>
+                </p>
               </div>
 
               <button 
                 onClick={() => navigate(-1)}
-                className="w-full bg-gray-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-800 transition-colors shadow-md"
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '0.75rem' }}
               >
                 Back to Dashboard
               </button>

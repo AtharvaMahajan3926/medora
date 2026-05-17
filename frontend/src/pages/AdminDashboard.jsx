@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { getPharmacies, updatePharmacyStatus as apiUpdatePharmacy, getAdminStats } from '../services/api';
+import { 
+  getPharmacies, updatePharmacyStatus as apiUpdatePharmacy, getAdminStats,
+  getDeliveryAgents, updateDeliveryAgentStatus as apiUpdateDeliveryAgent
+} from '../services/api';
 import { 
   Users, Hospital, Pill, Clock, LayoutDashboard, Store, 
   CheckCircle, XCircle, Ban, Check, X, RotateCcw, 
-  Activity, Sparkles, MapPin, Timer, ClipboardList, ShieldCheck
+  Activity, Sparkles, MapPin, Timer, ClipboardList, ShieldCheck, Truck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MotionContainer from '../components/common/MotionContainer';
@@ -13,23 +16,27 @@ import { SkeletonStats, SkeletonTable, Skeleton, SkeletonCard } from '../compone
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [pharmacyList, setPharmacyList] = useState([]);
+  const [deliveryAgentList, setDeliveryAgentList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: '…',
     totalPharmacies: '…',
     totalStocks: '…',
     pendingVerifications: '…',
+    totalDeliveryAgents: '…',
   });
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [pharmacies, liveStats] = await Promise.all([
+        const [pharmacies, agents, liveStats] = await Promise.all([
           getPharmacies(),
+          getDeliveryAgents(),
           getAdminStats(),
         ]);
         setPharmacyList(pharmacies || []);
+        setDeliveryAgentList(agents || []);
         setStats(liveStats);
       } catch (err) {
         toast.error('Failed to load admin data: ' + err.message);
@@ -53,6 +60,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const updateAgentStatus = async (id, status) => {
+    try {
+      await apiUpdateDeliveryAgent(id, status);
+      setDeliveryAgentList(prev =>
+        prev.map(a => (a.id === id ? { ...a, status } : a))
+      );
+      toast.success(`Delivery agent is now ${status}`);
+    } catch (err) {
+      toast.error('Update failed: ' + err.message);
+    }
+  };
+
   const oldestPending = pharmacyList.find(p => p.status === 'pending');
 
   const statCards = [
@@ -69,6 +88,7 @@ export default function AdminDashboard() {
       icon: <Hospital size={24} />,
       bg: 'var(--clr-success-bg)',
       color: 'var(--clr-success)',
+      tab: 'pharmacies',
     },
     {
       label: 'Total Stock Units',
@@ -83,6 +103,15 @@ export default function AdminDashboard() {
       icon: <Clock size={24} />,
       bg: 'var(--clr-warning-bg)',
       color: 'var(--clr-warning)',
+      tab: 'pharmacies',
+    },
+    {
+      label: 'Delivery Agents',
+      value: typeof stats.totalDeliveryAgents === 'number' ? stats.totalDeliveryAgents.toLocaleString() : stats.totalDeliveryAgents,
+      icon: <Truck size={24} />,
+      bg: 'var(--clr-info-bg)',
+      color: 'var(--clr-info)',
+      tab: 'agents',
     },
   ];
 
@@ -120,6 +149,15 @@ export default function AdminDashboard() {
           >
             <Store size={18} /> Pharmacies
           </motion.li>
+          <motion.li
+            className={activeTab === 'agents' ? 'active' : ''}
+            onClick={() => setActiveTab('agents')}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            whileHover={{ x: 5 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Truck size={18} /> Delivery Agents
+          </motion.li>
         </ul>
         
         <div className="sidebar-footer">
@@ -151,7 +189,11 @@ export default function AdminDashboard() {
                   >
                     <motion.div
                       className="stat-card"
-                      whileHover={{ scale: 1.05, translateY: -5 }}
+                      onClick={() => {
+                        if (card.tab) setActiveTab(card.tab);
+                      }}
+                      style={{ cursor: card.tab ? 'pointer' : 'default' }}
+                      whileHover={card.tab ? { scale: 1.04, translateY: -4 } : { scale: 1.01 }}
                       transition={{ type: "spring", stiffness: 300 }}
                     >
                       <div className="stat-icon" style={{ background: card.bg, color: card.color }}>
@@ -405,6 +447,115 @@ export default function AdminDashboard() {
                               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
                               <RotateCcw size={14} /> Re-review
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'agents' && (
+        <div className="animate-in">
+          <div className="section-header">
+            <h2>Delivery Agent Management</h2>
+            <span style={{ fontSize: 'var(--fs-sm)', color: 'var(--clr-text-muted)' }}>
+              {deliveryAgentList.length} delivery agents total
+            </span>
+          </div>
+
+          {loading ? (
+            <SkeletonTable rows={5} cols={6} />
+          ) : (
+            <div className="table-container">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Agent Name</th>
+                    <th>Phone</th>
+                    <th>Vehicle Type</th>
+                    <th>Availability</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliveryAgentList.map((agent, idx) => (
+                    <motion.tr 
+                      key={agent.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ 
+                        delay: idx * 0.08,
+                        duration: 0.8,
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
+                    >
+                      <td>
+                        <strong>{agent.name}</strong>
+                        <br />
+                        <span style={{ fontSize: 'var(--fs-xs)', color: 'var(--clr-text-muted)' }}>
+                          {agent.email}
+                        </span>
+                      </td>
+                      <td>{agent.phone}</td>
+                      <td>
+                        <span style={{ 
+                          textTransform: 'capitalize',
+                          background: 'var(--clr-surface-alt)',
+                          padding: '4px 8px',
+                          borderRadius: 'var(--radius-sm)',
+                          fontSize: '0.8rem',
+                          fontWeight: '600'
+                        }}>
+                          {agent.vehicle_type}
+                        </span>
+                      </td>
+                      <td>
+                        {agent.availability_status ? (
+                          <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <CheckCircle size={12} style={{ marginRight: '4px' }} /> Available
+                          </span>
+                        ) : (
+                          <span className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <Clock size={12} style={{ marginRight: '4px' }} /> Offline
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {agent.status === 'active' ? (
+                          <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <CheckCircle size={12} style={{ marginRight: '4px' }} /> Active
+                          </span>
+                        ) : (
+                          <span className="badge badge-danger" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            <Ban size={12} style={{ marginRight: '4px' }} /> Banned
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="actions">
+                          {agent.status === 'active' ? (
+                            <button
+                              className="btn btn-warning btn-sm"
+                              onClick={() => updateAgentStatus(agent.id, 'banned')}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <Ban size={14} /> Ban Agent
+                            </button>
+                          ) : (
+                            <button
+                              className="btn btn-success btn-sm"
+                              onClick={() => updateAgentStatus(agent.id, 'active')}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <Check size={14} /> Activate Agent
                             </button>
                           )}
                         </div>

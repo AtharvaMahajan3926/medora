@@ -30,16 +30,15 @@ const TrackingTimeline = ({ currentStatus, deliveryMethod }) => {
   }
 
   return (
-    <div className="py-4">
-      <div className="flex items-center justify-between relative">
+    <div style={{ padding: 'var(--sp-md) 0', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
         {/* Background line */}
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 -z-10 rounded"></div>
+        <div style={{ position: 'absolute', left: 0, top: '16px', width: '100%', height: '4px', background: 'var(--clr-border)', zIndex: 0, borderRadius: '2px' }}></div>
         
         {/* Active line progress */}
         {currentIndex >= 0 && (
           <div 
-            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-green-500 -z-10 rounded transition-all duration-500"
-            style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
+            style={{ position: 'absolute', left: 0, top: '16px', height: '4px', background: 'var(--clr-success)', zIndex: 0, borderRadius: '2px', transition: 'width 0.5s ease', width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
           ></div>
         )}
 
@@ -48,11 +47,31 @@ const TrackingTimeline = ({ currentStatus, deliveryMethod }) => {
           const isCurrent = currentIndex === idx;
           
           return (
-            <div key={idx} className="flex flex-col items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-300 ${isCompleted ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                {isCompleted ? <CheckCircle2 size={20} /> : <Circle size={16} />}
+            <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+              <div style={{ 
+                width: '32px', 
+                height: '32px', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                transition: 'all 0.3s ease',
+                background: isCompleted ? 'var(--clr-success)' : 'var(--clr-surface)',
+                color: isCompleted ? 'var(--clr-surface)' : 'var(--clr-text-muted)',
+                border: `2px solid ${isCompleted ? 'var(--clr-success)' : 'var(--clr-border)'}`,
+                boxShadow: isCurrent ? '0 0 0 4px var(--clr-success-bg)' : 'none'
+              }}>
+                {isCompleted ? <CheckCircle2 size={18} strokeWidth={3} /> : <Circle size={14} />}
               </div>
-              <span className={`text-xs mt-2 font-medium max-w-[60px] text-center ${isCurrent ? 'text-green-600' : isCompleted ? 'text-gray-800' : 'text-gray-400'}`}>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                marginTop: '0.5rem', 
+                fontWeight: isCurrent ? 'bold' : '500', 
+                maxWidth: '60px', 
+                textAlign: 'center', 
+                lineHeight: 1.2,
+                color: isCurrent ? 'var(--clr-success)' : isCompleted ? 'var(--clr-text)' : 'var(--clr-text-muted)' 
+              }}>
                 {step.label}
               </span>
             </div>

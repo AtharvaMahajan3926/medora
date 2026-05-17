@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { categories } from '../data/data';
-import { getMyInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, addInventoryBatch, getPharmacyBookingHistory } from '../services/api';
+import api, { getMyInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, addInventoryBatch, getPharmacyBookingHistory, verifyBooking } from '../services/api';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import MotionContainer from '../components/common/MotionContainer';
@@ -254,6 +254,14 @@ export default function PharmacistDashboard() {
 
           >
             📷 Verify Orders
+          </motion.li>
+          <motion.li 
+            className={activeTab === 'agents' ? 'active' : ''} 
+            onClick={() => setActiveTab('agents')}
+            whileHover={{ x: 5 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            🛵 Delivery Agents
           </motion.li>
           <motion.li 
             className={activeTab === 'history' ? 'active' : ''} 
@@ -533,8 +541,8 @@ export default function PharmacistDashboard() {
           </>
         )}
         
-        {/* Scanner Component inside Tab */}
-        {/* Replaced by standalone QRVerificationPage */}
+        {/* Delivery Agents Tab */}
+        {activeTab === 'agents' && <DeliveryAgentsTab />}
         
         {/* Order History Tab */}
         {activeTab === 'history' && <OrderHistoryTab />}
@@ -841,133 +849,383 @@ function OrderScannerTab({ loadInventory }) {
   );
 }
 
-function OrderHistoryTab() {
-  const [bookings, setBookings] = useState([]);
+function DeliveryAgentsTab() {
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all'); // all, pending, confirmed, expired
 
   useEffect(() => {
-    loadBookingHistory();
+    loadAgents();
   }, []);
 
-  const loadBookingHistory = async () => {
+  const loadAgents = async () => {
     try {
       setLoading(true);
-      const data = await getPharmacyBookingHistory();
-      setBookings(data || []);
+      const data = await api.get('/delivery/agents');
+      setAgents(data || []);
     } catch (err) {
-      toast.error('Failed to load booking history: ' + err.message);
+      toast.error('Failed to load delivery agents: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return <span className="badge badge-success">✅ Confirmed</span>;
-      case 'pending':
-        return <span className="badge badge-warning">⏳ Pending</span>;
-      case 'expired':
-        return <span className="badge badge-danger">❌ Expired</span>;
-      default:
-        return <span className="badge badge-secondary">{status}</span>;
-    }
-  };
-
-  const filteredBookings = bookings.filter(booking => {
-    if (filter === 'all') return true;
-    return booking.status === filter;
-  });
-
-  // Loading state for the tab content is handled in the return JSX below per section
-
   return (
     <div className="animate-in">
       <div className="section-header">
-        <h2>Order History</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <label style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>Filter:</label>
-          <select 
-            value={filter} 
-            onChange={e => setFilter(e.target.value)}
-            style={{ padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)' }}
-          >
-            <option value="all">All Orders</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="expired">Expired</option>
-          </select>
-        </div>
+        <h2>🛵 Delivery Agents Management</h2>
+        <button className="btn btn-ghost" onClick={loadAgents} disabled={loading}>🔄 Refresh</button>
       </div>
 
       {loading ? (
-        <SkeletonTable rows={5} cols={6} />
-      ) : filteredBookings.length === 0 ? (
+        <SkeletonTable rows={4} cols={5} />
+      ) : agents.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📋</div>
-          <p>No {filter === 'all' ? '' : filter + ' '}orders found.</p>
+          <div className="empty-icon">🛵</div>
+          <p>No delivery agents registered yet.</p>
         </div>
       ) : (
         <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Items</th>
-                <th>Total Amount</th>
-                <th>Created</th>
-                <th>Expires</th>
+                <th>Agent Name</th>
+                <th>Phone Number</th>
+                <th>Vehicle Type</th>
+                <th>Active Orders</th>
+                <th>Current Status</th>
               </tr>
             </thead>
             <tbody>
-              {filteredBookings.map((booking, idx) => (
+              {agents.map((agent, idx) => (
                 <motion.tr 
-                  key={booking.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
+                  key={agent.id}
+                  initial={{ opacity: 0, y: -10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ 
-                    delay: idx * 0.08, 
-                    duration: 0.8,
-                    ease: [0.22, 1, 0.36, 1]
-                  }}
+                  transition={{ delay: idx * 0.08 }}
                 >
+                  <td style={{ fontWeight: '600' }}>{agent.name}</td>
+                  <td>{agent.phone || 'N/A'}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{agent.vehicle_type || 'N/A'}</td>
+                  <td style={{ fontWeight: 'bold' }}>{agent.active_orders}</td>
                   <td>
-                    <div style={{ fontWeight: '600' }}>{booking.customer_name}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>
-                      ID: {booking.id.slice(-8)}
-                    </div>
-                  </td>
-                  <td>{getStatusBadge(booking.status)}</td>
-                  <td>
-                    <div style={{ maxWidth: '200px' }}>
-                      {booking.items.map((item, idx) => (
-                        <div key={idx} style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>
-                          {item.medicine_name} ({item.quantity}x)
-                        </div>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ fontWeight: 'bold', color: 'var(--clr-primary)' }}>
-                    ₹{booking.total_amount || booking.items.reduce((total, item) => total + (item.subtotal || 0), 0)}
-                  </td>
-                  <td style={{ fontSize: '0.85rem' }}>
-                    {new Date(booking.created_at).toLocaleDateString()}
-                    <br />
-                    {new Date(booking.created_at).toLocaleTimeString()}
-                  </td>
-                  <td style={{ fontSize: '0.85rem' }}>
-                    {new Date(booking.expires_at).toLocaleDateString()}
-                    <br />
-                    {new Date(booking.expires_at).toLocaleTimeString()}
+                    {agent.status === 'Busy' ? (
+                      <span className="badge badge-warning" style={{ background: '#fffbeb', color: '#b45309', border: '1px solid #fef3c7' }}>🔴 Busy ({agent.active_orders})</span>
+                    ) : (
+                      <span className="badge badge-success" style={{ background: '#f0fdf4', color: '#15803d', border: '1px solid #dcfce7' }}>🟢 Available</span>
+                    )}
                   </td>
                 </motion.tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  );
+}
+
+function OrderHistoryTab() {
+  const [subTab, setSubTab] = useState('delivery'); // 'pickup' or 'delivery'
+  const [bookings, setBookings] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [agents, setAgents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      const [bookingsData, ordersData, agentsData] = await Promise.all([
+        getPharmacyBookingHistory(),
+        api.get('/orders/pharmacy-history'),
+        api.get('/delivery/agents')
+      ]);
+      setBookings(bookingsData || []);
+      setOrders(ordersData || []);
+      setAgents(agentsData || []);
+    } catch (err) {
+      toast.error('Failed to load order history: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptOrder = async (orderId) => {
+    try {
+      setActionLoading(true);
+      await api.post(`/delivery/update-status/${orderId}`, { status: 'Accepted' });
+      toast.success('Order accepted successfully!');
+      loadAllData();
+    } catch (err) {
+      toast.error('Failed to accept order: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectOrder = async (orderId) => {
+    try {
+      setActionLoading(true);
+      await api.post(`/delivery/update-status/${orderId}`, { status: 'Rejected' });
+      toast.success('Order rejected.');
+      loadAllData();
+    } catch (err) {
+      toast.error('Failed to reject order: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAssignAgent = async (orderId, agentId) => {
+    if (!agentId) return;
+    try {
+      setActionLoading(true);
+      await api.post(`/delivery/assign-to-agent/${orderId}`, { agent_id: agentId });
+      toast.success('Delivery agent assigned successfully!');
+      loadAllData();
+    } catch (err) {
+      toast.error('Failed to assign agent: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCompleteOrder = async (orderId) => {
+    try {
+      setActionLoading(true);
+      await api.post(`/orders/complete/${orderId}`);
+      toast.success('Order Completed & Stock deducted successfully!');
+      loadAllData();
+    } catch (err) {
+      toast.error('Failed to complete order: ' + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'Completed':
+      case 'confirmed':
+        return <span className="badge badge-success">✅ Completed</span>;
+      case 'Delivered':
+        return <span className="badge badge-success" style={{ background: '#eff6ff', color: '#1d4ed8' }}>📦 Delivered</span>;
+      case 'pending':
+      case 'Pending':
+        return <span className="badge badge-warning">⏳ Pending</span>;
+      case 'Assigned to Delivery Agent':
+        return <span className="badge badge-info" style={{ background: '#f5f3ff', color: '#6d28d9' }}>🛵 Assigned</span>;
+      case 'Out for Delivery':
+        return <span className="badge badge-info" style={{ background: '#f0fdfa', color: '#0f766e' }}>🚀 Out for Delivery</span>;
+      case 'expired':
+      case 'Cancelled':
+      case 'Rejected':
+        return <span className="badge badge-danger">❌ {status}</span>;
+      default:
+        return <span className="badge badge-secondary">{status}</span>;
+    }
+  };
+
+  return (
+    <div className="animate-in">
+      <div className="section-header">
+        <h2>📋 Manage Customer Orders</h2>
+        <button className="btn btn-ghost" onClick={loadAllData} disabled={loading || actionLoading}>🔄 Refresh</button>
+      </div>
+
+      {/* Sub tabs */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '1rem', 
+        borderBottom: '1px solid var(--clr-border)', 
+        marginBottom: '1.5rem', 
+        paddingBottom: '0.5rem' 
+      }}>
+        <button 
+          onClick={() => setSubTab('delivery')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            fontSize: '1rem',
+            fontWeight: subTab === 'delivery' ? 'bold' : 'normal',
+            color: subTab === 'delivery' ? 'var(--clr-primary)' : 'var(--clr-text-muted)',
+            cursor: 'pointer',
+            paddingBottom: '0.5rem',
+            borderBottom: subTab === 'delivery' ? '2px solid var(--clr-primary)' : 'none'
+          }}
+        >
+          🛵 Home Deliveries ({orders.length})
+        </button>
+        <button 
+          onClick={() => setSubTab('pickup')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            fontSize: '1rem',
+            fontWeight: subTab === 'pickup' ? 'bold' : 'normal',
+            color: subTab === 'pickup' ? 'var(--clr-primary)' : 'var(--clr-text-muted)',
+            cursor: 'pointer',
+            paddingBottom: '0.5rem',
+            borderBottom: subTab === 'pickup' ? '2px solid var(--clr-primary)' : 'none'
+          }}
+        >
+          🏪 Store Pickups ({bookings.length})
+        </button>
+      </div>
+
+      {loading ? (
+        <SkeletonTable rows={5} cols={6} />
+      ) : subTab === 'pickup' ? (
+        // Store Pickups Table
+        bookings.length === 0 ? (
+          <div className="empty-state">
+            <p>No store pickup bookings found.</p>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Items</th>
+                  <th>Total Price</th>
+                  <th>Placed At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((booking, idx) => (
+                  <tr key={booking.id}>
+                    <td>
+                      <div style={{ fontWeight: '600' }}>{booking.customer_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>ID: {booking.id.slice(-8)}</div>
+                    </td>
+                    <td>{getStatusBadge(booking.status)}</td>
+                    <td>
+                      {booking.items.map((item, idx) => (
+                        <div key={idx} style={{ fontSize: '0.85rem' }}>
+                          {item.medicine_name} ({item.quantity}x)
+                        </div>
+                      ))}
+                    </td>
+                    <td style={{ fontWeight: 'bold', color: 'var(--clr-primary)' }}>₹{booking.total_amount || 0}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{new Date(booking.created_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : (
+        // Home Deliveries Table
+        orders.length === 0 ? (
+          <div className="empty-state">
+            <p>No home delivery orders found.</p>
+          </div>
+        ) : (
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Items</th>
+                  <th>Total Price</th>
+                  <th>Placed At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order, idx) => (
+                  <tr key={order.id}>
+                    <td>
+                      <div style={{ fontWeight: '600' }}>{order.customer_name}</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)' }}>ID: {order.id.slice(-8)}</div>
+                    </td>
+                    <td>{getStatusBadge(order.status)}</td>
+                    <td>
+                      {order.items.map((item, idx) => (
+                        <div key={idx} style={{ fontSize: '0.85rem' }}>
+                          {item.medicine_name} ({item.quantity}x)
+                        </div>
+                      ))}
+                    </td>
+                    <td style={{ fontWeight: 'bold', color: 'var(--clr-primary)' }}>₹{order.total_amount || 0}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{new Date(order.created_at).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        {order.status === 'Pending' && (
+                          <>
+                            <button 
+                              className="btn btn-success" 
+                              onClick={() => handleAcceptOrder(order.id)}
+                              disabled={actionLoading}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                            >
+                              Accept
+                            </button>
+                            <button 
+                              className="btn btn-danger" 
+                              onClick={() => handleRejectOrder(order.id)}
+                              disabled={actionLoading}
+                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', background: 'var(--clr-danger)' }}
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+
+                        {['Accepted', 'Packed'].includes(order.status) && (
+                          <select 
+                            onChange={(e) => handleAssignAgent(order.id, e.target.value)}
+                            disabled={actionLoading}
+                            defaultValue=""
+                            style={{ padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--clr-border)', fontSize: '0.85rem', maxWidth: '150px' }}
+                          >
+                            <option value="" disabled>🛵 Assign Agent</option>
+                            {agents.map(agent => (
+                              <option key={agent.id} value={agent.id}>
+                                {agent.name} ({agent.status})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+
+                        {order.status === 'Delivered' && (
+                          <button 
+                            className="btn btn-success" 
+                            onClick={() => handleCompleteOrder(order.id)}
+                            disabled={actionLoading}
+                            style={{ padding: '0.35rem 0.6rem', fontSize: '0.85rem', fontWeight: 'bold', background: 'var(--clr-success)', color: 'white' }}
+                          >
+                            ✅ Complete & Deduct Stock
+                          </button>
+                        )}
+
+                        {['Completed', 'Cancelled', 'Rejected'].includes(order.status) && (
+                          <span style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>No actions</span>
+                        )}
+                        
+                        {order.status === 'Assigned to Delivery Agent' && (
+                          <span style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>Waiting for Agent...</span>
+                        )}
+
+                        {order.status === 'Out for Delivery' && (
+                          <span style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>Out for delivery...</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       )}
     </div>
   );

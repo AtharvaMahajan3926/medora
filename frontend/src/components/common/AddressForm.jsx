@@ -29,13 +29,13 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-      <h3 className="text-xl font-bold mb-4 text-gray-800">Delivery Address</h3>
+    <form onSubmit={handleSubmit} style={{ padding: 'var(--sp-lg)', background: 'var(--clr-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--clr-border)', boxShadow: 'var(--shadow-sm)' }}>
+      <h3 style={{ margin: '0 0 var(--sp-lg) 0', fontSize: '1.25rem', color: 'var(--clr-text)' }}>Delivery Address</h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <User size={16} /> Full Name
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--sp-md)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <User size={16} color="var(--clr-text-muted)" /> Full Name
           </label>
           <input
             required
@@ -43,14 +43,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="full_name"
             value={formData.full_name}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="John Doe"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Phone size={16} /> Phone Number
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Phone size={16} color="var(--clr-text-muted)" /> Phone Number
           </label>
           <input
             required
@@ -58,14 +58,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="phone_number"
             value={formData.phone_number}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="+1 234 567 8900"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Home size={16} /> House/Flat No.
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Home size={16} color="var(--clr-text-muted)" /> House/Flat No.
           </label>
           <input
             required
@@ -73,14 +73,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="house_number"
             value={formData.house_number}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="Apt 4B"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MapPin size={16} /> Street/Area
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <MapPin size={16} color="var(--clr-text-muted)" /> Street/Area
           </label>
           <input
             required
@@ -88,14 +88,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="street"
             value={formData.street}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="Main Street"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MapIcon size={16} /> City
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <MapIcon size={16} color="var(--clr-text-muted)" /> City
           </label>
           <input
             required
@@ -103,14 +103,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="city"
             value={formData.city}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="City Name"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MapIcon size={16} /> State
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <MapIcon size={16} color="var(--clr-text-muted)" /> State
           </label>
           <input
             required
@@ -118,14 +118,14 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="state"
             value={formData.state}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="State Name"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Hash size={16} /> Pincode
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <label style={{ fontSize: '0.9rem', fontWeight: '500', color: 'var(--clr-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Hash size={16} color="var(--clr-text-muted)" /> Pincode
           </label>
           <input
             required
@@ -133,39 +133,39 @@ const AddressForm = ({ onSubmit, initialData = {}, onCancel }) => {
             name="pincode"
             value={formData.pincode}
             onChange={handleChange}
-            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="input-field"
             placeholder="123456"
           />
         </div>
         
-        <div className="flex items-center pt-6">
+        <div style={{ display: 'flex', alignItems: 'center', marginTop: 'auto', marginBottom: '0.5rem' }}>
           <input
             type="checkbox"
             id="is_default"
             name="is_default"
             checked={formData.is_default}
             onChange={handleChange}
-            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            style={{ width: '16px', height: '16px', accentColor: 'var(--clr-primary)' }}
           />
-          <label htmlFor="is_default" className="ml-2 text-sm font-medium text-gray-900">
+          <label htmlFor="is_default" style={{ marginLeft: '0.5rem', fontSize: '0.9rem', color: 'var(--clr-text)' }}>
             Set as default address
           </label>
         </div>
       </div>
 
-      <div className="mt-6 flex gap-3 justify-end">
+      <div style={{ marginTop: 'var(--sp-xl)', display: 'flex', gap: 'var(--sp-sm)', justifyContent: 'flex-end' }}>
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+            className="btn btn-secondary"
           >
             Cancel
           </button>
         )}
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors shadow-sm"
+          className="btn btn-primary"
         >
           Save Address
         </button>

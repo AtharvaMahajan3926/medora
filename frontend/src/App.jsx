@@ -11,7 +11,6 @@ import CheckoutPage from './pages/CheckoutPage';
 import OrderHistoryPage from './pages/OrderHistoryPage';
 import TrackOrderPage from './pages/TrackOrderPage';
 import DeliveryDashboardPage from './pages/DeliveryDashboardPage';
-import DeliveryAgentLoginPage from './pages/DeliveryAgentLoginPage';
 import QRVerificationPage from './pages/QRVerificationPage';
 import { getMe, logout as apiLogout, getToken } from './services/api';
 import { Toaster } from 'react-hot-toast';
@@ -99,8 +98,6 @@ export default function App() {
         <Route path="/signup" element={<SignUp onAuth={handleAuth} />} />
         <Route path="/signin" element={<SignIn onAuth={handleAuth} />} />
 
-        <Route path="/agent-login" element={<DeliveryAgentLoginPage onAuth={handleAuth} />} />
-
         {/* Protected */}
         <Route
           path="/admin"
@@ -155,7 +152,7 @@ export default function App() {
           element={
             user?.role === 'delivery_agent'
               ? <DeliveryDashboardPage />
-              : <Navigate to="/agent-login" replace />
+              : <Navigate to="/signin" replace />
           }
         />
         <Route
