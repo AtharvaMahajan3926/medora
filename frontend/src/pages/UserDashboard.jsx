@@ -445,7 +445,7 @@ export default function UserDashboard() {
                 ))}
               </select>
             </div>
-            <button type="submit" className="btn btn-primary" style={{ height: '100%' }} disabled={loading}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>🔍 Searching...</span> : 'Search'}
             </button>
           </form>
