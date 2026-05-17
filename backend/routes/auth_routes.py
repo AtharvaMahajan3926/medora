@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status, Depends
 from bson import ObjectId
 
-from database import users_collection, pharmacies_collection
-from models import UserSignUp, UserSignIn, UserResponse, TokenResponse
+from database import users_collection, pharmacies_collection, delivery_agents_collection
+from models import UserSignUp, UserSignIn, UserResponse, TokenResponse, DeliveryAgentSignUp
 from auth import hash_password, verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
@@ -86,6 +86,45 @@ async def signup(data: UserSignUp):
         await pharmacies_collection.insert_one(pharmacy_doc)
 
     # 5. Generate JWT
+    token = create_access_token({"sub": str(result.inserted_id), "role": data.role})
+    user_response = user_doc_to_response(user_doc)
+
+    return TokenResponse(access_token=token, user=user_response)
+
+
+# ── POST /api/auth/agent-signup ──────────────────────────────
+@router.post("/agent-signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+async def agent_signup(data: DeliveryAgentSignUp):
+    existing = await users_collection.find_one({"email": data.email.lower()})
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists.",
+        )
+
+    user_doc = {
+        "name": data.name.strip(),
+        "email": data.email.lower(),
+        "password_hash": hash_password(data.password),
+        "role": data.role,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+    }
+    result = await users_collection.insert_one(user_doc)
+    user_doc["_id"] = result.inserted_id
+
+    agent_doc = {
+        "agent_id": str(result.inserted_id),
+        "name": data.name.strip(),
+        "email": data.email.lower(),
+        "phone": data.phone.strip(),
+        "vehicle_type": data.vehicle_type,
+        "availability_status": True,
+        "status": "active",
+        "created_at": datetime.now(timezone.utc),
+    }
+    await delivery_agents_collection.insert_one(agent_doc)
+
     token = create_access_token({"sub": str(result.inserted_id), "role": data.role})
     user_response = user_doc_to_response(user_doc)
 

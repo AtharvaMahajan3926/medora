@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pill, User, Stethoscope, Store, AlertCircle, Loader2 } from 'lucide-react';
-import { signup as apiSignup } from '../services/api';
+import { Pill, User, Stethoscope, Store, AlertCircle, Loader2, Truck } from 'lucide-react';
+import { signup as apiSignup, agentSignup as apiAgentSignup } from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function SignUp({ onAuth }) {
@@ -20,6 +20,8 @@ export default function SignUp({ onAuth }) {
     licenseNumber: '',
     lat: '',
     lng: '',
+    // Agent fields
+    vehicle_type: 'bike',
   });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
@@ -51,6 +53,11 @@ export default function SignUp({ onAuth }) {
       if (!form.licenseNumber.trim()) errs.licenseNumber = 'License number is required';
     }
 
+    if (role === 'delivery_agent') {
+      if (!form.phone.trim()) errs.phone = 'Phone is required';
+      if (!form.vehicle_type) errs.vehicle_type = 'Vehicle type is required';
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -63,26 +70,37 @@ export default function SignUp({ onAuth }) {
     setServerError('');
 
     try {
-      const payload = {
-        ...form,
-        role: role,
-      };
-
-      const data = await apiSignup(payload);
-      const user = data.user;
-
-      if (user.status === 'pending') {
-        toast.success('Registration successful! Your account is pending admin verification.');
-        navigate('/signin');
-        return;
-      }
-
-      onAuth(user);
-
-      if (role === 'pharmacist') {
-        navigate('/pharmacist');
+      if (role === 'delivery_agent') {
+        const payload = {
+          ...form,
+          role: role,
+        };
+        const data = await apiAgentSignup(payload);
+        const user = data.user;
+        onAuth(user);
+        navigate('/delivery-dashboard');
       } else {
-        navigate('/dashboard');
+        const payload = {
+          ...form,
+          role: role,
+        };
+
+        const data = await apiSignup(payload);
+        const user = data.user;
+
+        if (user.status === 'pending') {
+          toast.success('Registration successful! Your account is pending admin verification.');
+          navigate('/signin');
+          return;
+        }
+
+        onAuth(user);
+
+        if (role === 'pharmacist') {
+          navigate('/pharmacist');
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (err) {
       setServerError(err.message || 'Sign up failed');
@@ -129,6 +147,14 @@ export default function SignUp({ onAuth }) {
             disabled={loading}
           >
             <Stethoscope size={16} /> Pharmacist
+          </button>
+          <button
+            className={role === 'delivery_agent' ? 'active' : ''}
+            onClick={() => setRole('delivery_agent')}
+            type="button"
+            disabled={loading}
+          >
+            <Truck size={16} /> Agent
           </button>
         </div>
 
@@ -301,6 +327,45 @@ export default function SignUp({ onAuth }) {
                     required
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Delivery Agent specific fields */}
+          {role === 'delivery_agent' && (
+            <div className="pharmacist-fields">
+              <span className="fields-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Truck size={18} /> Delivery Agent Details
+              </span>
+
+              <div className="input-group">
+                <label htmlFor="agent-phone">Phone Number</label>
+                <input
+                  id="agent-phone"
+                  className="input-field"
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={form.phone}
+                  onChange={e => update('phone', e.target.value)}
+                  disabled={loading}
+                />
+                {errors.phone && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.phone}</span>}
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="vehicle-type">Vehicle Type</label>
+                <select
+                  id="vehicle-type"
+                  className="input-field"
+                  value={form.vehicle_type}
+                  onChange={e => update('vehicle_type', e.target.value)}
+                  disabled={loading}
+                >
+                  <option value="bike">Bike</option>
+                  <option value="scooter">Scooter</option>
+                  <option value="car">Car</option>
+                </select>
+                {errors.vehicle_type && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.vehicle_type}</span>}
               </div>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { categories } from '../data/data';
-import { getMyInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, addInventoryBatch, verifyBooking, getPharmacyBookingHistory } from '../services/api';
+import { getMyInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, addInventoryBatch, getPharmacyBookingHistory } from '../services/api';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import { SkeletonStats, SkeletonTable } from '../components/common/Skeleton';
@@ -11,6 +12,7 @@ export default function PharmacistDashboard() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('inventory');
+  const navigate = useNavigate();
   
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -242,7 +244,7 @@ export default function PharmacistDashboard() {
           </li>
           <li 
             className={activeTab === 'orders' ? 'active' : ''} 
-            onClick={() => setActiveTab('orders')}
+            onClick={() => navigate('/qr-scan')}
           >
             📷 Verify Orders
           </li>
@@ -492,7 +494,7 @@ export default function PharmacistDashboard() {
         )}
         
         {/* Scanner Component inside Tab */}
-        {activeTab === 'orders' && <OrderScannerTab loadInventory={loadInventory} />}
+        {/* Replaced by standalone QRVerificationPage */}
         
         {/* Order History Tab */}
         {activeTab === 'history' && <OrderHistoryTab />}

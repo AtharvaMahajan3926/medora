@@ -81,6 +81,31 @@ export async function signup(formData) {
 }
 
 /**
+ * Sign up a new delivery agent.
+ * @param {Object} formData
+ * @returns {Promise<{access_token, token_type, user}>}
+ */
+export async function agentSignup(formData) {
+  const payload = {
+    name: formData.name,
+    email: formData.email,
+    password: formData.password,
+    phone: formData.phone,
+    vehicle_type: formData.vehicle_type,
+    role: 'delivery_agent'
+  };
+
+  const data = await request('/auth/agent-signup', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  // Store token
+  setToken(data.access_token);
+  return data;
+}
+
+/**
  * Sign in with email and password.
  * @param {string} email
  * @param {string} password
@@ -210,3 +235,15 @@ export async function getMyBookings() {
 export async function getPharmacyBookingHistory() {
   return request('/bookings/pharmacy-history');
 }
+
+// ── Generic API Client (Axios-like interface) ────────────────
+
+const api = {
+  get: (endpoint, options = {}) => request(endpoint, { ...options, method: 'GET' }),
+  post: (endpoint, data, options = {}) => request(endpoint, { ...options, method: 'POST', body: JSON.stringify(data) }),
+  put: (endpoint, data, options = {}) => request(endpoint, { ...options, method: 'PUT', body: JSON.stringify(data) }),
+  patch: (endpoint, data, options = {}) => request(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (endpoint, options = {}) => request(endpoint, { ...options, method: 'DELETE' })
+};
+
+export default api;
