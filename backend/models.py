@@ -96,10 +96,15 @@ class AdminStats(BaseModel):
     totalPharmacies: int
     totalStocks: int
     pendingVerifications: int
+    totalDeliveryAgents: int
 
 
 class PharmacyStatusUpdate(BaseModel):
     status: str = Field(..., pattern="^(verified|pending|denied|banned)$")
+
+
+class DeliveryAgentStatusUpdate(BaseModel):
+    status: str = Field(..., pattern="^(active|banned)$")
 
 
 class PharmacyResponse(BaseModel):

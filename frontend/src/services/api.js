@@ -170,6 +170,25 @@ export async function getAdminStats() {
   return request('/admin/stats');
 }
 
+/**
+ * Get all delivery agents (Admin only).
+ */
+export async function getDeliveryAgents() {
+  return request('/admin/delivery-agents');
+}
+
+/**
+ * Update delivery agent status (Admin only).
+ * @param {string} id
+ * @param {string} status 'active', 'banned'
+ */
+export async function updateDeliveryAgentStatus(id, status) {
+  return request(`/admin/delivery-agents/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  });
+}
+
 // ── Inventory API ────────────────────────────────────────────
 
 export async function getMyInventory() {

@@ -100,10 +100,10 @@
 
 /* ── Dark Theme ── */
 [data-theme="dark"] {
-  --clr-bg: #030708;
-  --clr-surface: #0b1114;
-  --clr-surface-alt: #12191e;
-  --clr-border: #1e292d;
+  --clr-bg: #040c0b;        /* Deep forest-teal black */
+  --clr-surface: #091715;   /* Premium deep-teal card surface */
+  --clr-surface-alt: #102422; /* Lighter deep-teal surface */
+  --clr-border: #1a3330;    /* Elegant deep-teal border */
   --clr-text: #f0f4f8;
   --clr-text-muted: #94a7af;
   --clr-text-light: #4c5d63;

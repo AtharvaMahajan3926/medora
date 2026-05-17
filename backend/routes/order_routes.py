@@ -104,11 +104,15 @@ async def create_order(data: OrderCreate, current_user: dict = Depends(get_curre
         
     qr_code = str(uuid.uuid4())
     
-    # Calculate ETA based on delivery method and emergency status
+    # Calculate ETA and delivery fee based on delivery method and emergency status
     eta = None
     if data.delivery_method == "home_delivery":
         base_minutes = 15 if data.is_emergency else 45
         eta = (datetime.now(timezone.utc) + timedelta(minutes=base_minutes)).isoformat()
+        
+        # Add delivery fee (5 for standard home delivery, 10 for emergency)
+        delivery_fee = 10.0 if data.is_emergency else 5.0
+        total_amount += delivery_fee
         
     order_doc = {
         "user_id": user_id,
@@ -174,6 +178,20 @@ async def get_my_orders(current_user: dict = Depends(get_current_user)):
                     "phone": agent.get("phone")
                 }
                 
+        # Get Address details if home delivery
+        address_info = None
+        if order.get("address_id") and ObjectId.is_valid(order["address_id"]):
+            from database import addresses_collection
+            address = await addresses_collection.find_one({"_id": ObjectId(order["address_id"])})
+            if address:
+                address_info = {
+                    "house_number": address.get("house_number", ""),
+                    "street": address.get("street", ""),
+                    "city": address.get("city", ""),
+                    "state": address.get("state", ""),
+                    "zip_code": address.get("zip_code", "")
+                }
+                
         results.append({
             "id": str(order["_id"]),
             "pharmacy_name": pharmacy_name,
@@ -186,7 +204,8 @@ async def get_my_orders(current_user: dict = Depends(get_current_user)):
             "is_emergency": order.get("is_emergency", False),
             "total_amount": order.get("total_amount", 0.0),
             "created_at": order.get("created_at"),
-            "agent": agent_info
+            "agent": agent_info,
+            "address": address_info
         })
         
     return results
@@ -235,3 +254,47 @@ async def get_pharmacy_orders(current_user: dict = Depends(get_current_user)):
         })
         
     return results
+
+@router.post("/complete/{order_id}")
+async def complete_order(order_id: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "pharmacist":
+        raise HTTPException(status_code=403, detail="Pharmacist privileges required")
+        
+    if not ObjectId.is_valid(order_id):
+        raise HTTPException(status_code=400, detail="Invalid order ID")
+        
+    order = await orders_collection.find_one({"_id": ObjectId(order_id)})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        
+    # Check if pharmacy owns this order
+    pharmacy = await pharmacies_collection.find_one({"owner_id": current_user["_id"]})
+    if not pharmacy or (pharmacy.get("legacy_id") != order["pharmacy_id"] and str(pharmacy["_id"]) != order["pharmacy_id"]):
+        raise HTTPException(status_code=403, detail="Not your pharmacy's order")
+        
+    if order.get("status") == "Completed":
+         raise HTTPException(status_code=400, detail="Order is already completed")
+         
+    # Only allow completing after order is Delivered or Picked Up
+    if order.get("status") not in ["Delivered", "Picked Up"]:
+         raise HTTPException(status_code=400, detail=f"Cannot complete order with status {order.get('status')}. It must be 'Delivered' or 'Picked Up' first.")
+         
+    # Reduce stock from inventory!
+    actual_pid = order["pharmacy_id"]
+    for item in order["items"]:
+        # Find inventory item and decrease stock
+        await inventory_collection.update_one(
+            {"pharmacy_id": actual_pid, "medicine_id": item["medicine_id"]},
+            {"$inc": {"stock": -item["quantity"]}}
+        )
+        
+    # Update order status to Completed
+    await orders_collection.update_one(
+        {"_id": ObjectId(order_id)},
+        {"$set": {
+            "status": "Completed",
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"detail": "Order successfully marked as Completed and inventory has been updated."}

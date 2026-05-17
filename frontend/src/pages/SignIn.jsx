@@ -32,6 +32,8 @@ export default function SignIn({ onAuth }) {
         navigate('/admin');
       } else if (user.role === 'pharmacist') {
         navigate('/pharmacist');
+      } else if (user.role === 'delivery_agent') {
+        navigate('/delivery-dashboard');
       } else {
         navigate('/dashboard');
       }

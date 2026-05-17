@@ -13,7 +13,7 @@ const OrderHistoryPage = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const { data } = await api.get('/orders/my-orders');
+        const data = await api.get('/orders/my-orders');
         setOrders(data);
       } catch (err) {
         toast.error('Failed to load order history');
@@ -25,27 +25,67 @@ const OrderHistoryPage = () => {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 md:p-6 min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">My Orders</h1>
+    <div style={{
+      width: '100%',
+      maxWidth: '960px',
+      margin: '0 auto',
+      padding: '2.5rem 1.5rem',
+      minHeight: '85vh',
+      color: 'var(--clr-text)'
+    }}>
+      <div style={{ marginBottom: '2.5rem', borderBottom: '1px solid var(--clr-border)', paddingBottom: '1.5rem', width: '100%' }}>
+        <h1 style={{
+          fontSize: '2.25rem',
+          fontWeight: '800',
+          margin: 0,
+          background: 'linear-gradient(135deg, var(--clr-primary), var(--clr-primary-light))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          letterSpacing: '-0.02em',
+          display: 'inline-block'
+        }}>
+          📦 My Orders
+        </h1>
+        <p style={{ color: 'var(--clr-text-muted)', fontSize: '1rem', margin: '0.5rem 0 0 0', fontWeight: '500' }}>
+          Track your real-time medicine bookings, home deliveries, and pickup QR codes.
+        </p>
+      </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+          <span className="spin" style={{ fontSize: '2rem', display: 'inline-block' }}>⏳</span>
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border shadow-sm">
-          <PackageSearch size={48} className="mx-auto text-gray-300 mb-4" />
-          <h2 className="text-xl font-bold text-gray-700">No Orders Yet</h2>
-          <p className="text-gray-500 mt-2 max-w-md mx-auto">Looks like you haven't placed any medicine orders yet.</p>
+        <div style={{
+          padding: '4rem 2rem',
+          textAlign: 'center',
+          background: 'var(--clr-surface)',
+          borderRadius: 'var(--radius-xl)',
+          border: '1px solid var(--clr-border)',
+          boxShadow: 'var(--shadow-md)',
+          maxWidth: '500px',
+          margin: '2rem auto'
+        }}>
+          <PackageSearch size={48} style={{ color: 'var(--clr-text-muted)', marginBottom: '1.5rem' }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--clr-text)', marginBottom: '0.5rem' }}>No Orders Yet</h2>
+          <p style={{ color: 'var(--clr-text-muted)', fontSize: '0.95rem', marginBottom: '2rem' }}>
+            Looks like you haven't placed any medicine orders yet.
+          </p>
           <button 
             onClick={() => navigate('/dashboard')}
-            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            className="btn btn-primary"
+            style={{ padding: '0.75rem 2rem' }}
           >
             Find Medicines
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '1.5rem',
+          marginTop: '1rem'
+        }}>
           {orders.map(order => (
             <OrderCard 
               key={order.id} 
@@ -54,7 +94,10 @@ const OrderHistoryPage = () => {
               actionButton={
                 <button 
                   onClick={(e) => { e.stopPropagation(); navigate(`/track/${order.id}`); }}
-                  className="px-4 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors"
+                  className="btn btn-primary btn-sm"
+                  style={{
+                    boxShadow: 'var(--button-glow)'
+                  }}
                 >
                   Track / View QR
                 </button>

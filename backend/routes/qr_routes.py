@@ -42,15 +42,8 @@ async def verify_qr_code(data: VerifyQRRequest, current_user: dict = Depends(get
             raise HTTPException(status_code=403, detail="Not your pharmacy's order")
         new_status = "Picked Up"
             
-    # Reduce inventory!
-    # According to rules: Stock reduces ONLY after successful delivery/pickup
-    actual_pid = order["pharmacy_id"]
-    for item in order["items"]:
-        await inventory_collection.update_one(
-            {"pharmacy_id": actual_pid, "medicine_id": item["medicine_id"]},
-            {"$inc": {"stock": -item["quantity"]}}
-        )
-        
+    # Note: Inventory reduction is deferred to Pharmacist marking order as Completed
+    # to follow the explicit user requirement.
     # Mark order as Delivered/Picked Up
     await orders_collection.update_one(
         {"_id": order["_id"]},

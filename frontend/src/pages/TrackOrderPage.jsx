@@ -17,7 +17,7 @@ const TrackOrderPage = () => {
     const fetchOrder = async () => {
       try {
         // Find order from my-orders list. (In a real app, you'd have a GET /orders/:id route)
-        const { data } = await api.get('/orders/my-orders');
+        const data = await api.get('/orders/my-orders');
         const found = data.find(o => o.id === id);
         if (!found) {
           toast.error('Order not found');
@@ -44,29 +44,79 @@ const TrackOrderPage = () => {
   const showQR = !isCompleted && order.status !== 'Cancelled';
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white border-b sticky top-0 z-10 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+    <div style={{ minHeight: '100vh', background: 'var(--clr-bg)', paddingBottom: '5rem', color: 'var(--clr-text)' }}>
+      <div style={{ 
+        background: 'var(--clr-surface)', 
+        borderBottom: '1px solid var(--clr-border)', 
+        position: 'sticky', 
+        top: 0, 
+        zIndex: 10, 
+        padding: '0.75rem 1.5rem', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        backdropFilter: 'blur(10px)', 
+        WebkitBackdropFilter: 'blur(10px)' 
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              cursor: 'pointer', 
+              padding: '0.5rem', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: 'var(--clr-text-muted)',
+              transition: 'background 0.2s'
+            }}
+            onMouseOver={e => e.currentTarget.style.background = 'var(--clr-surface-alt)'}
+            onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+          >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-xl font-bold">Track Order</h1>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Track Order</h1>
         </div>
         <DeliveryStatusBadge status={order.status} />
       </div>
 
-      <div className="max-w-xl mx-auto p-4 space-y-6 mt-4">
+      <div style={{ width: '100%', maxWidth: '600px', margin: '2rem auto 0 auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
         {/* Tracking Timeline */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-6">Order Status</h2>
+        <div style={{ 
+          background: 'var(--clr-surface)', 
+          padding: '1.5rem', 
+          borderRadius: 'var(--radius-lg)', 
+          border: '1px solid var(--clr-border)', 
+          boxShadow: 'var(--shadow-sm)' 
+        }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--clr-text)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>📍</span> Order Status
+          </h2>
           <TrackingTimeline currentStatus={order.status} deliveryMethod={order.delivery_method} />
         </div>
 
         {/* QR Code Section */}
         {showQR && (
-          <div className="bg-white p-6 rounded-xl border shadow-sm border-blue-100 bg-blue-50/30">
-            <h2 className="font-bold text-gray-800 mb-4 text-center">Verification QR Code</h2>
+          <div style={{ 
+            background: 'var(--clr-surface)', 
+            padding: '1.5rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: '1px solid var(--clr-primary-border)', 
+            boxShadow: 'var(--shadow-sm)',
+            background: 'linear-gradient(135deg, var(--clr-surface) 0%, var(--clr-primary-bg) 100%)'
+          }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--clr-primary)', marginBottom: '0.5rem', textAlign: 'center' }}>
+              Verification QR Code
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', textAlign: 'center', marginBottom: '1.5rem' }}>
+              {order.delivery_method === 'home_delivery' 
+                ? "Show this QR code to the delivery agent to receive your order." 
+                : "Show this QR code to the pharmacist at the store."}
+            </p>
             <QRCodeDisplay 
               value={order.qr_code} 
               label={order.delivery_method === 'home_delivery' 
@@ -78,28 +128,60 @@ const TrackOrderPage = () => {
 
         {/* Delivery Agent Info (If Assigned) */}
         {order.agent && (
-          <div className="bg-white p-6 rounded-xl border shadow-sm">
-            <h2 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider text-gray-500">Delivery Agent</h2>
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-500">
+          <div style={{ 
+            background: 'var(--clr-surface)', 
+            padding: '1.5rem', 
+            borderRadius: 'var(--radius-lg)', 
+            border: '1px solid var(--clr-border)', 
+            boxShadow: 'var(--shadow-sm)' 
+          }}>
+            <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--clr-text-muted)', marginBottom: '1rem' }}>
+              Delivery Agent
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ 
+                width: '3.5rem', 
+                height: '3.5rem', 
+                background: 'var(--clr-surface-alt)', 
+                borderRadius: '50%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                color: 'var(--clr-text-muted)' 
+              }}>
                 <User size={24} />
               </div>
-              <div className="flex-1">
-                <p className="font-bold text-lg">{order.agent.name}</p>
-                <div className="flex items-center gap-2 text-gray-600 mt-1 text-sm">
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0 }}>{order.agent.name}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: 'var(--clr-text-muted)', marginTop: '0.25rem', fontSize: '0.85rem' }}>
                   <Phone size={14} />
                   <span>{order.agent.phone}</span>
                 </div>
               </div>
-              <a href={`tel:${order.agent.phone}`} className="p-3 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors">
+              <a 
+                href={`tel:${order.agent.phone}`} 
+                style={{ 
+                  padding: '0.75rem', 
+                  background: 'var(--clr-success-bg)', 
+                  color: 'var(--clr-success)', 
+                  borderRadius: '50%', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  transition: 'opacity 0.2s',
+                  textDecoration: 'none'
+                }}
+                onMouseOver={e => e.currentTarget.style.opacity = 0.8}
+                onMouseOut={e => e.currentTarget.style.opacity = 1}
+              >
                 <Phone size={20} />
               </a>
             </div>
             {order.estimated_delivery_time && !isNaN(new Date(order.estimated_delivery_time).getTime()) && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium text-gray-800">Estimated Delivery: </span> 
-                  <span className="text-blue-700 font-bold">
+              <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--clr-border)' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', margin: 0 }}>
+                  <span style={{ fontWeight: '500', color: 'var(--clr-text)' }}>Estimated Delivery: </span> 
+                  <span style={{ color: 'var(--clr-primary)', fontWeight: 'bold' }}>
                     {new Date(order.estimated_delivery_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                   </span>
                 </p>
@@ -109,28 +191,43 @@ const TrackOrderPage = () => {
         )}
 
         {/* Order Details Summary */}
-        <div className="bg-white p-6 rounded-xl border shadow-sm">
-          <h2 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider text-gray-500">Order Summary</h2>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Pharmacy</span>
-              <span className="font-medium text-right">{order.pharmacy_name}</span>
+        <div style={{ 
+          background: 'var(--clr-surface)', 
+          padding: '1.5rem', 
+          borderRadius: 'var(--radius-lg)', 
+          border: '1px solid var(--clr-border)', 
+          boxShadow: 'var(--shadow-sm)' 
+        }}>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--clr-text-muted)', marginBottom: '1rem' }}>
+            Order Summary
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+              <span style={{ color: 'var(--clr-text-muted)' }}>Pharmacy</span>
+              <span style={{ fontWeight: '500', textAlign: 'right' }}>{order.pharmacy_name}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Delivery Method</span>
-              <span className="font-medium text-right">
-                {order.delivery_method === 'home_delivery' ? 'Home Delivery' : 'Store Pickup'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+              <span style={{ color: 'var(--clr-text-muted)' }}>Delivery Method</span>
+              <span style={{ fontWeight: '500', textAlign: 'right' }}>
+                {order.delivery_method === 'home_delivery' ? '🚗 Home Delivery' : '🏪 Store Pickup'}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Payment</span>
-              <span className="font-medium text-right">
-                {order.payment_method === 'pay_on_delivery' ? 'Pay on Delivery' : 'Pay at Shop'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+              <span style={{ color: 'var(--clr-text-muted)' }}>Payment</span>
+              <span style={{ fontWeight: '500', textAlign: 'right' }}>
+                {order.payment_method === 'pay_on_delivery' ? '💵 Pay on Delivery' : '💳 Pay at Shop'}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Amount</span>
-              <span className="font-bold text-right">${Number(order.total_amount || 0).toFixed(2)}</span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontSize: '1rem', 
+              paddingTop: '0.75rem', 
+              borderTop: '1px dashed var(--clr-border)',
+              marginTop: '0.25rem'
+            }}>
+              <span style={{ color: 'var(--clr-text-muted)' }}>Amount</span>
+              <span style={{ fontWeight: 'bold', color: 'var(--clr-primary)' }}>₹{Number(order.total_amount || 0).toFixed(2)}</span>
             </div>
           </div>
         </div>

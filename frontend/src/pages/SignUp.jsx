@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Pill, User, Stethoscope, Store, AlertCircle, Loader2, Truck } from 'lucide-react';
-import { signup as apiSignup, agentSignup as apiAgentSignup } from '../services/api';
+import { signup as apiSignup, agentSignup as apiAgentSignup, clearToken } from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function SignUp({ onAuth }) {
@@ -77,10 +77,10 @@ export default function SignUp({ onAuth }) {
           ...form,
           role: role,
         };
-        const data = await apiAgentSignup(payload);
-        const user = data.user;
-        onAuth(user);
-        navigate('/delivery-dashboard');
+        await apiAgentSignup(payload);
+        clearToken(); // Don't auto-login
+        toast.success('Agent account created successfully! Please sign in.');
+        navigate('/signin');
       } else {
         const payload = {
           ...form,
@@ -89,6 +89,7 @@ export default function SignUp({ onAuth }) {
 
         const data = await apiSignup(payload);
         const user = data.user;
+        clearToken(); // Don't auto-login
 
         if (user.status === 'pending') {
           toast.success('Registration successful! Your account is pending admin verification.');
@@ -96,13 +97,8 @@ export default function SignUp({ onAuth }) {
           return;
         }
 
-        onAuth(user);
-
-        if (role === 'pharmacist') {
-          navigate('/pharmacist');
-        } else {
-          navigate('/dashboard');
-        }
+        toast.success('Account created successfully! Please sign in.');
+        navigate('/signin');
       }
     } catch (err) {
       setServerError(err.message || 'Sign up failed');
