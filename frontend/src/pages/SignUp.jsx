@@ -51,6 +51,8 @@ export default function SignUp({ onAuth }) {
       if (!form.phone.trim()) errs.phone = 'Phone is required';
       if (!form.timings.trim()) errs.timings = 'Timings are required';
       if (!form.licenseNumber.trim()) errs.licenseNumber = 'License number is required';
+      if (!form.lat) errs.lat = 'Latitude is required';
+      if (!form.lng) errs.lng = 'Longitude is required';
     }
 
     if (role === 'delivery_agent') {
@@ -110,6 +112,7 @@ export default function SignUp({ onAuth }) {
   };
 
 
+
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -125,20 +128,21 @@ export default function SignUp({ onAuth }) {
 
         {/* Server Error */}
         {serverError && (
-          <div className="inline-alert" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--clr-danger-bg)', color: 'var(--clr-danger)', marginBottom: 'var(--sp-md)', padding: 'var(--sp-sm) var(--sp-md)', borderRadius: 'var(--radius-md)', fontSize: 'var(--fs-sm)' }}>
-            <AlertCircle size={18} style={{ flexShrink: 0 }} /> <span>{serverError}</span>
+          <div className="inline-alert danger">
+            <AlertCircle size={20} style={{ marginTop: '2px' }} /> 
+            <span>{serverError}</span>
           </div>
         )}
 
         {/* Role Toggle */}
-        <div className="role-toggle" style={{ marginBottom: 'var(--sp-lg)' }}>
+        <div className="role-toggle" style={{ marginBottom: 'var(--sp-xl)' }}>
           <button
             className={role === 'user' ? 'active' : ''}
             onClick={() => setRole('user')}
             type="button"
             disabled={loading}
           >
-            <User size={16} /> User
+            <User size={18} /> User
           </button>
           <button
             className={role === 'pharmacist' ? 'active' : ''}
@@ -146,7 +150,7 @@ export default function SignUp({ onAuth }) {
             type="button"
             disabled={loading}
           >
-            <Stethoscope size={16} /> Pharmacist
+            <Stethoscope size={18} /> Pharmacist
           </button>
           <button
             className={role === 'delivery_agent' ? 'active' : ''}
@@ -170,7 +174,7 @@ export default function SignUp({ onAuth }) {
               onChange={e => update('name', e.target.value)}
               disabled={loading}
             />
-            {errors.name && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.name}</span>}
+            {errors.name && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.name}</span>}
           </div>
 
           <div className="input-group">
@@ -184,7 +188,7 @@ export default function SignUp({ onAuth }) {
               onChange={e => update('email', e.target.value)}
               disabled={loading}
             />
-            {errors.email && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.email}</span>}
+            {errors.email && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.email}</span>}
           </div>
 
           <div className="grid-2">
@@ -199,7 +203,7 @@ export default function SignUp({ onAuth }) {
                 onChange={e => update('password', e.target.value)}
                 disabled={loading}
               />
-              {errors.password && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.password}</span>}
+              {errors.password && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.password}</span>}
             </div>
 
             <div className="input-group">
@@ -213,16 +217,17 @@ export default function SignUp({ onAuth }) {
                 onChange={e => update('confirmPassword', e.target.value)}
                 disabled={loading}
               />
-              {errors.confirmPassword && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.confirmPassword}</span>}
+              {errors.confirmPassword && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.confirmPassword}</span>}
             </div>
           </div>
 
           {/* Pharmacist-specific fields */}
           {role === 'pharmacist' && (
             <div className="pharmacist-fields">
-              <span className="fields-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Store size={18} /> Pharmacy Details
-              </span>
+              <div className="fields-title">
+                <Store size={20} /> 
+                <span>Pharmacy Details</span>
+              </div>
 
               <div className="input-group">
                 <label htmlFor="pharmacy-name">Pharmacy Name</label>
@@ -235,7 +240,7 @@ export default function SignUp({ onAuth }) {
                   onChange={e => update('pharmacyName', e.target.value)}
                   disabled={loading}
                 />
-                {errors.pharmacyName && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.pharmacyName}</span>}
+                {errors.pharmacyName && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.pharmacyName}</span>}
               </div>
 
               <div className="grid-2">
@@ -250,7 +255,7 @@ export default function SignUp({ onAuth }) {
                     onChange={e => update('city', e.target.value)}
                     disabled={loading}
                   />
-                  {errors.city && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.city}</span>}
+                  {errors.city && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.city}</span>}
                 </div>
 
                 <div className="input-group">
@@ -264,7 +269,7 @@ export default function SignUp({ onAuth }) {
                     onChange={e => update('phone', e.target.value)}
                     disabled={loading}
                   />
-                  {errors.phone && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.phone}</span>}
+                  {errors.phone && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.phone}</span>}
                 </div>
               </div>
 
@@ -280,7 +285,7 @@ export default function SignUp({ onAuth }) {
                     onChange={e => update('timings', e.target.value)}
                     disabled={loading}
                   />
-                  {errors.timings && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.timings}</span>}
+                  {errors.timings && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.timings}</span>}
                 </div>
 
                 <div className="input-group">
@@ -294,7 +299,7 @@ export default function SignUp({ onAuth }) {
                     onChange={e => update('licenseNumber', e.target.value)}
                     disabled={loading}
                   />
-                  {errors.licenseNumber && <span style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)' }}>{errors.licenseNumber}</span>}
+                  {errors.licenseNumber && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.licenseNumber}</span>}
                 </div>
               </div>
 
@@ -310,8 +315,8 @@ export default function SignUp({ onAuth }) {
                     value={form.lat}
                     onChange={e => update('lat', e.target.value)}
                     disabled={loading}
-                    required
                   />
+                  {errors.lat && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.lat}</span>}
                 </div>
                 <div className="input-group">
                   <label htmlFor="pharmacy-lng">Longitude</label>
@@ -324,8 +329,8 @@ export default function SignUp({ onAuth }) {
                     value={form.lng}
                     onChange={e => update('lng', e.target.value)}
                     disabled={loading}
-                    required
                   />
+                  {errors.lng && <span className="error-text" style={{ color: 'var(--clr-danger)', fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{errors.lng}</span>}
                 </div>
               </div>
             </div>
@@ -378,6 +383,7 @@ export default function SignUp({ onAuth }) {
           >
             {loading ? <><Loader2 size={18} className="spin" /> Creating Account...</> : 'Create Account'}
           </button>
+
         </form>
 
         <div className="auth-footer">

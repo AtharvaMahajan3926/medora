@@ -1,22 +1,18 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from bson import ObjectId
 from datetime import datetime, timezone, timedelta
 import uuid
 
-from database import pharmacies_collection, inventory_collection
-# Hack to get the client's db since database.py doesn't export 'db' clearly
-from database import users_collection 
-
-db = users_collection.database
-bookings_collection = db["bookings"]
+from database import pharmacies_collection, inventory_collection, users_collection, bookings_collection
 
 from models import BookingCreate, BookingResponse, VerifyBookingRequest
 from auth import get_current_user
+from email_utils import send_booking_confirmation_email
 
 router = APIRouter(prefix="/api/bookings", tags=["Bookings"])
 
 @router.post("/", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)
-async def create_booking(data: BookingCreate, current_user: dict = Depends(get_current_user)):
+async def create_booking(data: BookingCreate, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     user_id = current_user["_id"]
     
     # Check if pharmacy exists
@@ -61,6 +57,16 @@ async def create_booking(data: BookingCreate, current_user: dict = Depends(get_c
     }
     
     res = await bookings_collection.insert_one(booking_doc)
+    
+    # Send confirmation email in background
+    if current_user.get("email"):
+        background_tasks.add_task(
+            send_booking_confirmation_email, 
+            current_user["email"], 
+            pharmacy["name"], 
+            booking_items, 
+            qr_token
+        )
     
     return {
         "id": str(res.inserted_id),

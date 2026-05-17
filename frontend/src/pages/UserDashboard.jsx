@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, LayersControl, Circle, ScaleControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { motion, AnimatePresence } from 'framer-motion';
+import MotionContainer from '../components/common/MotionContainer';
 import { categories } from '../data/data';
 import { searchMedicines, createBooking, getMyBookings } from '../services/api';
 import { useNavigate } from 'react-router-dom';
@@ -562,48 +564,65 @@ export default function UserDashboard() {
 
         {/* Sidebar List */}
         {hasSearched && (
-          <div style={{ width: '350px', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '10px' }}>
+          <motion.div 
+            style={{ width: '350px', display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', paddingRight: '10px' }}
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1 } }
+            }}
+          >
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
             ) : mapPins.length > 0 ? (
-              mapPins.map(pin => (
-              <div key={pin.pharmacy.id} style={{ background: 'var(--clr-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem' }}>{pin.pharmacy.name}</h3>
-                  {pin.pharmacy.distance !== null && (
-                    <span className="badge badge-primary">{pin.pharmacy.distance} km</span>
-                  )}
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', marginBottom: '0.5rem' }}>📍 {pin.pharmacy.address}</p>
+              mapPins.map((pin, idx) => (
+              <MotionContainer 
+                key={pin.pharmacy.id} 
+                delay={idx * 0.05}
+                direction="right"
+                distance={20}
+              >
+                <div style={{ background: 'var(--clr-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'all 0.3s var(--spring-soft)' }} className="interactive-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1rem' }}>{pin.pharmacy.name}</h3>
+                    {pin.pharmacy.distance !== null && (
+                      <span className="badge badge-primary">{pin.pharmacy.distance} km</span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', marginBottom: '0.5rem' }}>📍 {pin.pharmacy.address}</p>
 
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleOrderNow(pin)}>🛒 Order Now</button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => handleDirections(pin.pharmacy)}>🗺️ Direction</button>
-                  <a href={`tel:${pin.pharmacy.phone}`} className="btn btn-ghost btn-sm">📞 Call</a>
-                </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn btn-primary btn-sm" onClick={() => handleOrderNow(pin)}>🛒 Order Now</motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn btn-primary btn-sm" onClick={() => openBookingSetup(pin)}>🛒 Book</motion.button>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn btn-secondary btn-sm" onClick={() => handleDirections(pin.pharmacy)}>🗺️ Direction</motion.button>
+                    <motion.a whileHover={{ scale: 1.1 }} href={`tel:${pin.pharmacy.phone}`} className="btn btn-ghost btn-sm">📞 Call</motion.a>
+                  </div>
 
-                <div>
-                  {pin.allMedicines.map((m, i) => (
-                    <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--clr-border)' : 'none', padding: '0.5rem 0', fontSize: '0.85rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '500' }}>
-                        <span>{m.medicine.name}</span>
-                        <span>₹{m.price || 0}</span>
+                  <div>
+                    {pin.allMedicines.map((m, i) => (
+                      <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--clr-border)' : 'none', padding: '0.5rem 0', fontSize: '0.85rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '500' }}>
+                          <span>{m.medicine.name}</span>
+                          <span style={{ color: 'var(--clr-primary)' }}>₹{m.price || 0}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                          {getStockBadge(m.stock)}
+                          {m.medicine.rxRequired && <span className="badge badge-warning">Rx</span>}
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                        {getStockBadge(m.stock)}
-                        {m.medicine.rxRequired && <span className="badge badge-warning">Rx</span>}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </MotionContainer>
             ))
             ) : (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--clr-text-muted)' }}>
-                  No results found.
-                </div>
+                <MotionContainer direction="up">
+                  <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--clr-text-muted)' }}>
+                    No results found.
+                  </div>
+                </MotionContainer>
             )}
-          </div>
+          </motion.div>
         )}
 
         {/* Map Area */}
@@ -782,6 +801,308 @@ export default function UserDashboard() {
           )}
         </div>
       </div>
+      </>
+      ) : (
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: 'var(--fs-xl)', margin: 0 }}>Your Booking History</h2>
+            <button className="btn btn-secondary btn-sm" onClick={fetchBookings} disabled={loadingBookings}>
+              {loadingBookings ? (
+                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>🔄 Refreshing...</span>
+              ) : '🔄 Refresh'}
+            </button>
+          </div>
+          {loadingBookings ? (
+            <SkeletonTable rows={4} cols={5} />
+          ) : myBookings.length === 0 ? (
+            <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--clr-surface)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--clr-border)' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📋</div>
+              <h3 style={{ margin: '0 0 0.5rem 0' }}>No Bookings Yet</h3>
+              <p style={{ color: 'var(--clr-text-muted)' }}>You haven't made any medicine bookings. Search for a medicine and book it to see your history here.</p>
+              <button className="btn btn-primary" style={{ marginTop: '1rem' }} onClick={() => setActiveTab('search')}>Start Searching</button>
+            </div>
+          ) : (
+            <motion.div 
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: { transition: { staggerChildren: 0.2 } }
+              }}
+            >
+              {myBookings.map((b, idx) => (
+                <MotionContainer 
+                  key={b.id} 
+                  delay={idx * 0.1}
+                  direction="up"
+                  distance={20}
+                >
+                  <div style={{ background: 'var(--clr-surface)', padding: '1.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--clr-border)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', transition: 'transform 0.3s var(--spring-soft)' }} className="interactive-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--clr-text)' }}>{b.pharmacy_name}</h3>
+                      <span className={`badge ${b.status === 'confirmed' ? 'badge-success' : b.status === 'pending' ? 'badge-warning' : 'badge-danger'}`} style={{ textTransform: 'capitalize', fontSize: '0.8rem', padding: '0.4em 0.8em' }}>
+                        {b.status}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: 'var(--clr-text-muted)', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                      <span>🆔 Booking ID: <code>{b.id}</code></span>
+                      {b.status === 'pending' && b.qr_token && (
+                        <span>🎫 Token: <code>{String(b.qr_token).split('-')[0]}</code></span>
+                      )}
+                    </div>
+                    
+                    <div style={{ marginBottom: '1.5rem', background: 'var(--clr-background)', padding: '1rem', borderRadius: 'var(--radius-sm)' }}>
+                      <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', textTransform: 'uppercase', color: 'var(--clr-text-muted)', letterSpacing: '0.5px' }}>Items Ordered</h4>
+                      {b.items.map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', borderTop: i > 0 ? '1px solid var(--clr-border)' : 'none', padding: '0.5rem 0', fontSize: '0.95rem' }}>
+                          <span style={{ fontWeight: '500' }}>{item.medicine_name} <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.85em', marginLeft: '0.5rem' }}>x{item.quantity}</span></span>
+                          <span style={{ fontWeight: '600' }}>₹{item.price * item.quantity}</span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid var(--clr-border)', paddingTop: '0.5rem', marginTop: '0.5rem', fontWeight: 'bold' }}>
+                        <span>Total Amount</span>
+                        <span>₹{b.items.reduce((total, item) => total + (item.price * item.quantity), 0)}</span>
+                      </div>
+                    </div>
+                    
+                    <div style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <span>📅 <strong>Created:</strong> {new Date(b.created_at).toLocaleString()}</span>
+                      <span>⌛ <strong>Expires:</strong> {new Date(b.expires_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </MotionContainer>
+              ))}
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* Booking Modal */}
+      <AnimatePresence>
+      {showBookModal && bookingPharmacy && (
+        <motion.div 
+          className="modal-overlay" 
+          onClick={() => !qrToken && setShowBookModal(false)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="modal" 
+            onClick={e => e.stopPropagation()} 
+            style={{ maxWidth: '500px' }}
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          >
+
+            {!qrToken ? (
+              <>
+                <h2>Book at {bookingPharmacy.pharmacy.name}</h2>
+                <p style={{ color: 'var(--clr-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Select the quantities you wish to reserve. The pharmacy will hold these for 30 minutes.
+                </p>
+
+                {/* Prescription Requirement Notice */}
+                {bookingPharmacy.allMedicines.some(m => m.medicine.rxRequired) && (
+                  <MotionContainer direction="down" distance={10}>
+                    <div style={{
+                      background: 'var(--clr-warning-bg)',
+                      border: '1px solid var(--clr-warning)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '0.75rem',
+                      marginBottom: '1rem',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '0.5rem'
+                    }}>
+                      <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                      <div>
+                        <div style={{ fontWeight: '600', color: 'var(--clr-warning)', marginBottom: '0.25rem' }}>
+                          Prescription Required
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)' }}>
+                          Medicines marked with "Rx Required" need a valid prescription. Please bring it when collecting.
+                        </div>
+                      </div>
+                    </div>
+                  </MotionContainer>
+                )}
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem' }}>
+                  {bookingPharmacy.allMedicines.map(m => {
+                    const quantity = bookingQuantities[m.medicine.id] || 0;
+                    const itemTotal = quantity * (m.price || 0);
+                    return (
+                      <div key={m.medicine.id} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '1rem',
+                        borderBottom: '1px solid var(--clr-border)',
+                        background: quantity > 0 ? 'var(--clr-primary-bg)' : 'transparent',
+                        transition: 'background 0.3s ease'
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '600', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {m.medicine.name}
+                            {m.medicine.rxRequired && (
+                              <span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>Rx Required</span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', marginBottom: '0.25rem' }}>
+                            ₹{m.price || 0} per unit • Stock: {m.stock}
+                          </div>
+                          {quantity > 0 && (
+                            <motion.div 
+                              initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }}
+                              style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--clr-primary)' }}
+                            >
+                              Subtotal: ₹{itemTotal}
+                            </motion.div>
+                          )}
+                        </div>
+
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          background: 'var(--clr-surface)',
+                          borderRadius: '25px',
+                          padding: '0.25rem',
+                          border: '1px solid var(--clr-border)'
+                        }}>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setBookingQuantities(prev => ({ ...prev, [m.medicine.id]: Math.max(0, quantity - 1) }))}
+                            disabled={quantity <= 0}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: quantity > 0 ? 'var(--clr-danger)' : 'var(--clr-border)',
+                              color: quantity > 0 ? 'white' : 'var(--clr-text-muted)',
+                              cursor: quantity > 0 ? 'pointer' : 'not-allowed',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            −
+                          </motion.button>
+                          <span style={{ minWidth: '40px', textAlign: 'center', fontWeight: '600', fontSize: '1rem' }}>
+                            {quantity}
+                          </span>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => setBookingQuantities(prev => ({ ...prev, [m.medicine.id]: Math.min(m.stock, quantity + 1) }))}
+                            disabled={quantity >= m.stock}
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              border: 'none',
+                              background: quantity < m.stock ? 'var(--clr-success)' : 'var(--clr-border)',
+                              color: quantity < m.stock ? 'white' : 'var(--clr-text-muted)',
+                              cursor: quantity < m.stock ? 'pointer' : 'not-allowed',
+                              fontSize: '16px',
+                              fontWeight: 'bold',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            +
+                          </motion.button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Total Price Section */}
+                <div style={{
+                  background: 'var(--clr-background)',
+                  padding: '1rem',
+                  borderRadius: 'var(--radius-md)',
+                  marginBottom: '1rem',
+                  border: '1px solid var(--clr-border)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>Order Summary</span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>
+                      {Object.values(bookingQuantities).reduce((sum, qty) => sum + qty, 0)} items
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--clr-primary)' }}>
+                    <span>Total Amount:</span>
+                    <span>₹{bookingPharmacy.allMedicines.reduce((total, m) => {
+                      const qty = bookingQuantities[m.medicine.id] || 0;
+                      return total + (qty * (m.price || 0));
+                    }, 0)}</span>
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button className="btn btn-ghost" onClick={() => setShowBookModal(false)}>Cancel</button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="btn btn-primary"
+                    onClick={submitBooking}
+                    disabled={bookingLoading || Object.values(bookingQuantities).reduce((a, b) => a + b, 0) === 0}
+                    style={{ minWidth: '140px' }}
+                  >
+                    {bookingLoading ? 'Reserving...' : 'Confirm'}
+                  </motion.button>
+                </div>
+              </>
+            ) : (
+              <motion.div 
+                style={{ textAlign: 'center', padding: '1rem' }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", bounce: 0.5 }}
+              >
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                <h2 style={{ color: 'var(--clr-primary)' }}>Booking Confirmed!</h2>
+                <p style={{ marginBottom: '2rem' }}>Present the QR code below to the pharmacist within 30 minutes.</p>
+
+                <motion.div 
+                  style={{ margin: '0 auto 2rem', background: '#fff', padding: '1.5rem', display: 'inline-block', borderRadius: '16px', boxShadow: 'var(--shadow-lg)' }}
+                  initial={{ rotate: -10, scale: 0.8 }}
+                  animate={{ rotate: 0, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                >
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrToken}`}
+                    alt="Booking QR"
+                    width="180"
+                    height="180"
+                  />
+                </motion.div>
+
+                <div style={{ fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '1rem' }}>
+                  Token: <code>{String(qrToken).split('-')[0]}</code>
+                </div>
+
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowBookModal(false)}>
+                  Close
+                </button>
+              </motion.div>
+            )}
+
+          </motion.div>
+        </motion.div>
+      )}
+      </AnimatePresence>
+
     </div>
   );
 }

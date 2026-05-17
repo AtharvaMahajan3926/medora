@@ -22,3 +22,4 @@ addresses_collection = db["addresses"]
 delivery_agents_collection = db["delivery_agents"]
 orders_collection = db["orders"]
 
+bookings_collection = db["bookings"]
