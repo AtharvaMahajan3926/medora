@@ -1,9 +1,13 @@
 """
 MEDORA Backend — FastAPI Application
 """
+import os
+from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv()
 
 from database import db, users_collection
 from auth import hash_password
@@ -66,13 +70,21 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
+frontend_url_env = os.getenv("FRONTEND_URL")
+if frontend_url_env:
+    for url in frontend_url_env.split(","):
+        url_stripped = url.strip()
+        if url_stripped and url_stripped not in origins:
+            origins.append(url_stripped)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -3,8 +3,10 @@
  * Handles all communication with the FastAPI backend.
  */
 
-const API_BASE = '/api';
-
+const rawApiUrl = import.meta.env.VITE_API_URL;
+const API_BASE = rawApiUrl
+  ? `${rawApiUrl.replace(/\/+$/, '')}/api`
+  : '/api';
 // ── Token Management ─────────────────────────────────────────
 
 export function getToken() {
@@ -35,13 +37,24 @@ async function request(endpoint, options = {}) {
   });
 
   let data = {};
+  let responseText = '';
+  try {
+    responseText = await response.text();
+  } catch (e) {
+    // Ignore read errors
+  }
+
   const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
+  if (contentType && contentType.includes('application/json') && responseText) {
+    try {
+      data = JSON.parse(responseText);
+    } catch (err) {
+      // Ignore JSON parse errors for non-JSON content
+    }
   }
 
   if (!response.ok) {
-    const message = data.detail || 'Something went wrong';
+    const message = data.detail || responseText.slice(0, 150) || `HTTP error ${response.status}`;
     throw new Error(message);
   }
 
